@@ -6,8 +6,16 @@ namespace ServerSideSimulation.Sim
 	{
 		static void Main(string[] args)
 		{
-			Raylib.InitWindow(800, 800, "Hello Raylib");
-			Raylib.SetTargetFPS(60);
+			var screenWidth = 800;
+			var screenHeight = 800;
+			var textureRec = new Raylib.Rectangle
+			{
+				x = 0,
+				y = 0,
+				width = screenWidth,
+				height = screenHeight
+			};
+			var texturePos = new Raylib.Vector2();
 
 			var rect = new Raylib.Rectangle
 			{
@@ -24,14 +32,29 @@ namespace ServerSideSimulation.Sim
 			};
 			var angleDelta = 0.5f;
 
+			Raylib.InitWindow(screenWidth, screenHeight, "Hello Raylib");
+			var renderTexture = Raylib.LoadRenderTexture(screenWidth, screenHeight);
+			Raylib.SetTargetFPS(60);
 			while (!Raylib.WindowShouldClose())
 			{
+				// primary rendering to target texture
+				Raylib.BeginTextureMode(renderTexture);
 				Raylib.ClearBackground(Raylib.Colors.White);
-				Raylib.BeginDrawing();
-
 				angle += angleDelta;
 				Raylib.DrawRectanglePro(rect, origin, angle, Raylib.Colors.Blue);
+				Raylib.EndTextureMode();
 
+				// bitmap extraction
+				var image = Raylib.LoadImageFromTexture(renderTexture.texture);
+
+				// encode/stream the video here
+
+				Raylib.UnloadImage(image);
+
+				// debug rendering to window
+				Raylib.BeginDrawing();
+				Raylib.ClearBackground(Raylib.Colors.White);
+				Raylib.DrawTextureRec(renderTexture.texture, textureRec, texturePos, Raylib.Colors.White);
 				Raylib.EndDrawing();
 			}
 

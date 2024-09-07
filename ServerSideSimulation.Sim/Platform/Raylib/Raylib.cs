@@ -2,7 +2,8 @@
 
 namespace ServerSideSimulation.Sim.Platform.Raylib
 {
-	using RenderTexture2D = Raylib.Texture;
+	using Texture2D = Raylib.Texture;
+	using RenderTexture2D = Raylib.RenderTexture;
 
     internal static class Raylib
     {
@@ -43,6 +44,24 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
 			public float height;
 		}
 
+		[StructLayout(LayoutKind.Sequential)]
+		public unsafe struct Image
+		{
+			public void* data;
+			public int width;
+			public int height;
+			public int mipmaps;
+			public int format;
+		};
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct RenderTexture
+		{
+			public uint id;
+			public Texture texture;
+			public Texture depth;
+		}
+
 		// -------------- FUNCTIONS --------------
 
 		[DllImport("raylib.dll")]
@@ -73,6 +92,9 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
 		public static extern void EndTextureMode();
 
 		[DllImport("raylib.dll")]
+		public static extern RenderTexture2D LoadRenderTexture(int width, int height);
+
+		[DllImport("raylib.dll")]
 		public static extern void DrawRectangle(int posX, int posY, int width, int height, Color color);
 
 		[DllImport("raylib.dll")]
@@ -80,6 +102,18 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
 
 		[DllImport("raylib.dll")]
 		public static extern void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color);
+
+		[DllImport("raylib.dll")]
+		public static extern void DrawTexture(Texture2D texture, int posX, int posY, Color tint);
+
+		[DllImport("raylib.dll")]
+		public static extern void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint);
+
+		[DllImport("raylib.dll")]
+		public static extern Image LoadImageFromTexture(Texture2D texture);
+
+		[DllImport("raylib.dll")]
+		public static extern void UnloadImage(Image image);
 
 		// -------------- CONSTANTS --------------
 
