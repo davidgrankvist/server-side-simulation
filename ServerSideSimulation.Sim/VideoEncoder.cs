@@ -4,18 +4,12 @@ namespace ServerSideSimulation.Sim
 {
     internal class VideoEncoder
     {
-        private BitmapChannel channel;
-        private int screenWidth;
-        private int screenHeight;
-        private int fps;
+        private readonly RenderSettings settings;
         private bool verbose;
 
-        public VideoEncoder(BitmapChannel channel, int screenWidth, int screenHeight, int fps, bool verbose = false)
+        public VideoEncoder(RenderSettings settings, bool verbose = false)
         {
-            this.channel = channel;
-            this.screenWidth = screenWidth;
-            this.screenHeight = screenHeight;
-            this.fps = fps;
+            this.settings = settings;
             this.verbose = verbose;
         }
 
@@ -35,7 +29,7 @@ namespace ServerSideSimulation.Sim
             var outputFile = Path.Combine(AppContext.BaseDirectory, "input.raw");
             using (var fileStream = File.Create(outputFile))
             {
-                await foreach (var frame in channel.ReadAllAsync())
+                await foreach (var frame in settings.Channel.ReadAllAsync())
                 {
                     if (frameCount++ >= maxFrames)
                     {
@@ -63,7 +57,7 @@ namespace ServerSideSimulation.Sim
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "ffmpeg",
-                    Arguments = $"-f rawvideo -pix_fmt rgba -s {screenWidth}x{screenHeight} -r {fps} -i - -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4 -y",
+                    Arguments = $"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4 -y",
                     RedirectStandardInput = true,
                     RedirectStandardOutput = verbose,
                     RedirectStandardError = verbose,
@@ -121,7 +115,7 @@ namespace ServerSideSimulation.Sim
             var frameCount = 0;
             using (var stdin = ffmpegProcess.StandardInput.BaseStream)
             {
-                await foreach (var frame in channel.ReadAllAsync())
+                await foreach (var frame in settings.Channel.ReadAllAsync())
                 {
                     if (frameCount++ >= maxFrames)
                     {

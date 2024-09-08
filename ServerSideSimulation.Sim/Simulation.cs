@@ -5,19 +5,13 @@ namespace ServerSideSimulation.Sim
 {
     internal class Simulation
     {
-        private BitmapChannel channel;
+        private readonly RenderSettings settings;
         private bool headlessMode;
-        private int screenWidth;
-        private int screenHeight;
-        private int fps;
 
-        public Simulation(BitmapChannel channel, int screenWidth, int screenHeight, int fps, bool headlessMode = true)
+        public Simulation(RenderSettings settings, bool headlessMode = true)
         {
-            this.channel = channel;
-            this.screenWidth = screenWidth;
-            this.screenHeight = screenHeight;
+            this.settings = settings;
             this.headlessMode = headlessMode;
-            this.fps = fps;
         }
 
         public void Run()
@@ -28,8 +22,8 @@ namespace ServerSideSimulation.Sim
             {
                 x = 0,
                 y = 0,
-                width = screenWidth,
-                height = screenHeight
+                width = settings.ScreenWidth,
+                height = settings.ScreenHeight
             };
             var texturePos = new Raylib.Vector2();
 
@@ -56,11 +50,11 @@ namespace ServerSideSimulation.Sim
             }
             else
             {
-                Raylib.InitWindow(screenWidth, screenHeight, title);
+                Raylib.InitWindow(settings.ScreenWidth, settings.ScreenHeight, title);
             }
 
-            var renderTexture = Raylib.LoadRenderTexture(screenWidth, screenHeight);
-            Raylib.SetTargetFPS(fps);
+            var renderTexture = Raylib.LoadRenderTexture(settings.ScreenWidth, settings.ScreenHeight);
+            Raylib.SetTargetFPS(settings.Fps);
             while (!Raylib.WindowShouldClose())
             {
                 // primary rendering to target texture
@@ -100,7 +94,7 @@ namespace ServerSideSimulation.Sim
         {
             const int bytesPerPixel = 4; // RGBA
             var bitmap = IntPtrToByteArray(image.data, image.width * image.height * bytesPerPixel);
-            channel.Write(bitmap);
+            settings.Channel.Write(bitmap);
         }
     }
 }
