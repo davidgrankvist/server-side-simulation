@@ -85,10 +85,10 @@ namespace ServerSideSimulation.Sim
              * To output captured raw bitmap data, run
              *
              * ffmpeg -f rawvideo -pix_fmt rgba -s 800x800 -r 60 -i input.raw -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345
-             * 
+             *
              * To render the result in a window by using SDL, run
              *
-             * ffmpeg -f mpegts -i udp://127.0.0.1:12345 -f sdl "Video Display"
+             * Scripts\render_udp_video.bat
              */
             frameCountGuard = false;
             return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345");
