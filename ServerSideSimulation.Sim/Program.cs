@@ -4,14 +4,18 @@
     {
         static void Main(string[] args)
         {
+            var screenWidth = 800;
+            var screenHeight = 800;
+            var fps = 60;
             var channel = new BitmapChannel(10);
-            channel.Open();
+            var simulation = new Simulation(channel, screenWidth, screenHeight, fps);
+            var encoder = new VideoEncoder(channel, screenWidth, screenHeight, fps);
 
-            var simulation = new Simulation(channel, 800, 800);
-            var encoder = new VideoEncoder(channel);
+            channel.Open();
 
             var encoderTask = Task.Run(encoder.Run);
             simulation.Run();
+
             channel.Close();
 
             encoderTask.Wait();

@@ -62,6 +62,17 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
             public Texture depth;
         }
 
+        public enum TraceLogLevel {
+            LOG_ALL = 0,
+            LOG_TRACE,
+            LOG_DEBUG,
+            LOG_INFO,
+            LOG_WARNING,
+            LOG_ERROR,
+            LOG_FATAL,
+            LOG_NONE,
+        }
+
         // -------------- FUNCTIONS --------------
 
         [DllImport("raylib.dll")]
@@ -114,6 +125,9 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
 
         [DllImport("raylib.dll")]
         public static extern void UnloadImage(Image image);
+
+        [DllImport("raylib.dll")]
+        public static extern void SetTraceLogLevel(TraceLogLevel logLevel);
 
         // -------------- CONSTANTS --------------
 

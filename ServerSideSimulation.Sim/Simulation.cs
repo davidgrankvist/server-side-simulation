@@ -9,13 +9,15 @@ namespace ServerSideSimulation.Sim
         private bool headlessMode;
         private int screenWidth;
         private int screenHeight;
+        private int fps;
 
-        public Simulation(BitmapChannel channel, int screenWidth, int screenHeight, bool headlessMode = false)
+        public Simulation(BitmapChannel channel, int screenWidth, int screenHeight, int fps, bool headlessMode = true)
         {
             this.channel = channel;
             this.screenWidth = screenWidth;
             this.screenHeight = screenHeight;
             this.headlessMode = headlessMode;
+            this.fps = fps;
         }
 
         public void Run()
@@ -46,6 +48,7 @@ namespace ServerSideSimulation.Sim
             };
             var angleDelta = 0.5f;
 
+            Raylib.SetTraceLogLevel(Raylib.TraceLogLevel.LOG_NONE);
             if (headlessMode)
             {
                 // raylib is not built for headless mode, so allocate a small buffer instead
@@ -57,7 +60,7 @@ namespace ServerSideSimulation.Sim
             }
 
             var renderTexture = Raylib.LoadRenderTexture(screenWidth, screenHeight);
-            Raylib.SetTargetFPS(60);
+            Raylib.SetTargetFPS(fps);
             while (!Raylib.WindowShouldClose())
             {
                 // primary rendering to target texture

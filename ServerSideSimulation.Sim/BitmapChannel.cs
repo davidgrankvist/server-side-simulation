@@ -30,9 +30,16 @@ namespace ServerSideSimulation.Sim
             channel.Writer.TryWrite(data);
         }
 
-        public IAsyncEnumerable<byte[]> ReadAllAsync()
+        public async IAsyncEnumerable<byte[]> ReadAllAsync()
         {
-            return channel.Reader.ReadAllAsync();
+            while (await channel.Reader.WaitToReadAsync())
+            {
+                channel.Reader.TryRead(out var data);
+                if (data != null)
+                {
+                    yield return data;
+                }
+            }
         }
     }
 }
