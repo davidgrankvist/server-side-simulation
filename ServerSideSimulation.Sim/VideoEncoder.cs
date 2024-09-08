@@ -7,6 +7,9 @@ namespace ServerSideSimulation.Sim
         private readonly RenderSettings settings;
         private bool verbose;
 
+        private bool frameCountGuard;
+        private int maxFrames = 100;
+
         public VideoEncoder(RenderSettings settings, bool verbose = false)
         {
             this.settings = settings;
@@ -23,7 +26,7 @@ namespace ServerSideSimulation.Sim
         // output bitmap data to for manual testing of the ffmpeg command
         private async Task OutputRawFrames()
         {
-            var maxFrames = 100; // TODO(prototype): guard for when outputting to video
+            frameCountGuard = true;
             var frameCount = 0;
 
             var outputFile = Path.Combine(AppContext.BaseDirectory, "input.raw");
@@ -31,7 +34,7 @@ namespace ServerSideSimulation.Sim
             {
                 await foreach (var frame in settings.Channel.ReadAllAsync())
                 {
-                    if (frameCount++ >= maxFrames)
+                    if (frameCountGuard && frameCount++ >= maxFrames)
                     {
                         Console.WriteLine($"Encoded the maximum {maxFrames} frames. Ending encode loop.");
                         break;
@@ -45,26 +48,8 @@ namespace ServerSideSimulation.Sim
         private async Task RunEncoding()
         {
 
-            /*
-             * Tested manually by outputting raw frames to input.raw and running the following:
-             *
-             * ffmpeg -f rawvideo -pix_fmt rgba -s 800x800 -r 60 -i input.raw -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4 -y
-             */
-
-            var outputFile = Path.Combine(AppContext.BaseDirectory, "output.mp4");
-            var ffmpegProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "ffmpeg",
-                    Arguments = $"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4 -y",
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = verbose,
-                    RedirectStandardError = verbose,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                }
-            };
+            //var ffmpegProcess = CreateOutputToMp4Process();
+            var ffmpegProcess = CreateOutputToUdpProcess();
 
             ffmpegProcess.Start();
 
@@ -82,6 +67,64 @@ namespace ServerSideSimulation.Sim
                 Console.WriteLine("Caught exception while encoding frames.", ex);
                 await FinishEncoding(ffmpegProcess, maxExitWaitMs);
             }
+        }
+
+        // publish the encoded video stream on UDP
+        // TODO(investigate): the frames are published and can be decoded, but the result is partially corrupted
+        private Process CreateOutputToUdpProcess()
+        {
+            /*
+             * To manually capture the video stream an create an mp4, run the following command:
+             *
+             * ffmpeg -f mpegts -i udp://127.0.0.1:12345 -s 800x800 -r 60 -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4
+             *
+             * To create a dummy output stream to UDP, run
+             *
+             * ffmpeg -f lavfi -i testsrc=size=800x800:rate=60 -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345
+             *
+             * To output captured raw bitmap data, run
+             *
+             * ffmpeg -f rawvideo -pix_fmt rgba -s 800x800 -r 60 -i input.raw -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345
+             * 
+             * To render the result in a window by using SDL, run
+             *
+             * ffmpeg -f mpegts -i udp://127.0.0.1:12345 -f sdl "Video Display"
+             */
+            frameCountGuard = false;
+            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345");
+            //return CreateFfMpegProcess("-f lavfi -i testsrc=size=800x800:rate=60 -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345");
+        }
+
+        // output to mp4 file for manual testing
+        private Process CreateOutputToMp4Process()
+        {
+            /*
+             * Tested manually by outputting raw frames to input.raw and running the following:
+             *
+             * ffmpeg -f rawvideo -pix_fmt rgba -s 800x800 -r 60 -i input.raw -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4 -y
+             */
+            frameCountGuard = true;
+            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4 -y");
+        }
+
+        private Process CreateFfMpegProcess(string args)
+        {
+            var outputFile = Path.Combine(AppContext.BaseDirectory, "output.mp4");
+            var ffmpegProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "ffmpeg",
+                    Arguments = args,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = verbose,
+                    RedirectStandardError = verbose,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+
+            return ffmpegProcess;
         }
 
         private void ExitAfterTimeout(Process process, int timeoutMs)
@@ -111,13 +154,12 @@ namespace ServerSideSimulation.Sim
 
         private async Task EncodeFrames(Process ffmpegProcess)
         {
-            var maxFrames = 100; // TODO(prototype): guard for when outputting to video
             var frameCount = 0;
             using (var stdin = ffmpegProcess.StandardInput.BaseStream)
             {
                 await foreach (var frame in settings.Channel.ReadAllAsync())
                 {
-                    if (frameCount++ >= maxFrames)
+                    if (frameCountGuard && frameCount++ >= maxFrames)
                     {
                         Console.WriteLine($"Encoded the maximum {maxFrames} frames. Ending encode loop.");
                         break;
