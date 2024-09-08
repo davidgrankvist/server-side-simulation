@@ -47,7 +47,7 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
         [StructLayout(LayoutKind.Sequential)]
         public unsafe struct Image
         {
-            public void* data;
+            public IntPtr data;
             public int width;
             public int height;
             public int mipmaps;

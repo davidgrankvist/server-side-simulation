@@ -1,20 +1,25 @@
 ﻿using ServerSideSimulation.Sim.Platform.Raylib;
+using System.Runtime.InteropServices;
 
 namespace ServerSideSimulation.Sim
 {
     internal class Simulation
     {
+        private BitmapChannel channel;
         private bool headlessMode;
+        private int screenWidth;
+        private int screenHeight;
 
-        public Simulation(bool headlessMode = false)
+        public Simulation(BitmapChannel channel, int screenWidth, int screenHeight, bool headlessMode = false)
         {
-            this.headlessMode = headlessMode;    
+            this.channel = channel;
+            this.screenWidth = screenWidth;
+            this.screenHeight = screenHeight;
+            this.headlessMode = headlessMode;
         }
 
         public void Run()
         {
-            var screenWidth = 800;
-            var screenHeight = 800;
             var title = "Simulation";
 
             var textureRec = new Raylib.Rectangle
@@ -64,12 +69,10 @@ namespace ServerSideSimulation.Sim
 
                 // bitmap extraction
                 var image = Raylib.LoadImageFromTexture(renderTexture.texture);
-
-                // encode/stream the video here
-
+                TransmitImage(image);
                 Raylib.UnloadImage(image);
 
-                // always use begin/end drawing to allow closing the tiny window
+                // always use begin/end drawing to allow closing the window
                 Raylib.BeginDrawing();
                 if (!headlessMode)
                 {
@@ -81,6 +84,20 @@ namespace ServerSideSimulation.Sim
             }
 
             Raylib.CloseWindow();
+        }
+
+        private byte[] IntPtrToByteArray(IntPtr ptr, int length)
+        {
+            var bytes = new byte[length];
+            Marshal.Copy(ptr, bytes, 0, bytes.Length);
+            return bytes;
+        }
+
+        private void TransmitImage(Raylib.Image image)
+        {
+            const int bytesPerPixel = 4; // RGBA
+            var bitmap = IntPtrToByteArray(image.data, image.width * image.height * bytesPerPixel);
+            channel.Write(bitmap);
         }
     }
 }
