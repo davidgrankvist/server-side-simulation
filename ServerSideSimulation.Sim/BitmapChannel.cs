@@ -4,9 +4,15 @@ namespace ServerSideSimulation.Sim
 {
     internal class BitmapChannel
     {
-        private readonly Channel<byte[]> channel;
+        private readonly int capacity;
+        private Channel<byte[]> channel;
 
         public BitmapChannel(int capacity)
+        {
+            this.capacity = capacity;
+        }
+
+        public void Open()
         {
             channel = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(capacity)
             {
@@ -14,22 +20,19 @@ namespace ServerSideSimulation.Sim
             });
         }
 
+        public void Close()
+        {
+            channel.Writer.Complete();
+        }
+
         public void Write(byte[] data)
         {
             channel.Writer.TryWrite(data);
         }
 
-        public bool TryRead(out byte[] data)
+        public IAsyncEnumerable<byte[]> ReadAllAsync()
         {
-            data = [];
-
-            if (channel.Reader.TryRead(out var item))
-            {
-                data = item;
-                return true;
-            }
-
-            return false;
+            return channel.Reader.ReadAllAsync();
         }
     }
 }
