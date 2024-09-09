@@ -49,7 +49,7 @@ namespace ServerSideSimulation.Sim
         {
 
             //var ffmpegProcess = CreateOutputToMp4Process();
-            var ffmpegProcess = CreateOutputToUdpProcess();
+            var ffmpegProcess = CreateOutputToTcpProcess();
 
             ffmpegProcess.Start();
 
@@ -69,30 +69,28 @@ namespace ServerSideSimulation.Sim
             }
         }
 
-        // publish the encoded video stream on UDP
-        // TODO(investigate): the frames are published and can be decoded, but the result is partially corrupted
-        private Process CreateOutputToUdpProcess()
+        // publish the encoded video stream on TCP
+        private Process CreateOutputToTcpProcess()
         {
             /*
              * To manually capture the video stream an create an mp4, run the following command:
              *
-             * ffmpeg -f mpegts -i udp://127.0.0.1:12345 -s 800x800 -r 60 -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4
+             * ffmpeg -f mpegts -i tcp://127.0.0.1:12345 -s 800x800 -r 60 -c:v libx264 -pix_fmt yuv420p -f mp4 output.mp4
              *
-             * To create a dummy output stream to UDP, run
+             * To create a dummy output stream to TCP, run
              *
-             * ffmpeg -f lavfi -i testsrc=size=800x800:rate=60 -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345
+             * ffmpeg -f lavfi -i testsrc=size=800x800:rate=60 -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345
              *
              * To output captured raw bitmap data, run
              *
-             * ffmpeg -f rawvideo -pix_fmt rgba -s 800x800 -r 60 -i input.raw -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345
+             * ffmpeg -f rawvideo -pix_fmt rgba -s 800x800 -r 60 -i input.raw -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345
              *
              * To render the result in a window by using SDL, run
              *
-             * Scripts\render_udp_video.bat
+             * Scripts\render_tcp_video.bat
              */
             frameCountGuard = false;
-            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345");
-            //return CreateFfMpegProcess("-f lavfi -i testsrc=size=800x800:rate=60 -c:v libx264 -pix_fmt yuv420p -f mpegts udp://127.0.0.1:12345");
+            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345");
         }
 
         // output to mp4 file for manual testing
