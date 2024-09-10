@@ -1,19 +1,24 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
-using System.Text;
 
 namespace ServerSideSimulation.Server
 {
     internal class WebServer
     {
         private static readonly string baseUrl = "http://localhost:8080";
+        private readonly VideoStreamChannel channel;
+
+        public WebServer(VideoStreamChannel channel)
+        {
+            this.channel = channel;
+        }
 
         public Task Run()
         {
-            return Task.Run(StartListener);
+            return StartListener();
         }
 
-        private static async Task StartListener()
+        private async Task StartListener()
         {
             var httpListener = new HttpListener();
             var endPoint = baseUrl + "/";
@@ -28,7 +33,7 @@ namespace ServerSideSimulation.Server
             }
         }
 
-        private static async Task HandleRequestAndErrors(HttpListenerContext context)
+        private async Task HandleRequestAndErrors(HttpListenerContext context)
         {
             try
             {
@@ -36,11 +41,12 @@ namespace ServerSideSimulation.Server
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Caught error from handler", ex);
+                Console.WriteLine("Caught error from handler");
+                Console.WriteLine(ex);
             }
         }
 
-        private static async Task RouteRequest(HttpListenerContext context)
+        private async Task RouteRequest(HttpListenerContext context)
         {
             var url = context.Request.Url?.ToString() ?? "";
             var path = url.Length >= baseUrl.Length ? url.Remove(0, baseUrl.Length) : url;
@@ -63,7 +69,7 @@ namespace ServerSideSimulation.Server
             }
         }
 
-        private static async Task HandleFileRequest(HttpListenerContext context, string path)
+        private async Task HandleFileRequest(HttpListenerContext context, string path)
         {
             Console.WriteLine("Incoming file request");
 
@@ -87,7 +93,7 @@ namespace ServerSideSimulation.Server
             await context.Response.OutputStream.WriteAsync(fileBytes, 0, fileBytes.Length);
         }
 
-        private static async Task HandleWebsocketRequest(HttpListenerContext context)
+        private async Task HandleWebsocketRequest(HttpListenerContext context)
         {
             Console.WriteLine("Incoming ws request.");
 
@@ -116,24 +122,23 @@ namespace ServerSideSimulation.Server
             await Task.WhenAll(sendTask, receiveTask);
         }
 
-        // TODO(incomplete): dummy implementation
-        private static async Task RunSendLoop(WebSocket ws, CancellationToken cancellation)
+        private async Task RunSendLoop(WebSocket ws, CancellationToken cancellation)
         {
             Console.WriteLine("Starting send message loop.");
-            while (ws.State == WebSocketState.Open && !cancellation.IsCancellationRequested)
+            await foreach (var message in channel.ReadAllAsync())
             {
-                var message = "Hello, this is the date: " + DateTime.Now;
-                var messageBytes = Encoding.UTF8.GetBytes(message);
+                if (ws.State != WebSocketState.Open ||cancellation.IsCancellationRequested)
+                {
+                    break;
+                }
 
-                await ws.SendAsync(messageBytes, WebSocketMessageType.Text, true, cancellation);
-
-                await Task.Delay(1000);
+                await ws.SendAsync(message, WebSocketMessageType.Binary, true, cancellation);
             }
             Console.WriteLine("Ended send message loop");
         }
 
         // receive messages to check if the client sent a close message
-        private static async Task RunReceiveLoop(WebSocket ws, CancellationToken cancellation)
+        private async Task RunReceiveLoop(WebSocket ws, CancellationToken cancellation)
         {
             Console.WriteLine("Starting receive message loop.");
 

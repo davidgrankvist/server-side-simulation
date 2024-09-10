@@ -90,7 +90,7 @@ namespace ServerSideSimulation.Sim
              * Scripts\render_tcp_video.bat
              */
             frameCountGuard = false;
-            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345");
+            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345\\?listen");
         }
 
         // output to mp4 file for manual testing
