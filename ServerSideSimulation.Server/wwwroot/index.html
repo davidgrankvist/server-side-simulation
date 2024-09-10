@@ -1,0 +1,12 @@
+<html>
+<body>
+    <script>
+        const ws = new WebSocket('ws://localhost:8080/ws/');
+        const target = document.body.querySelector("div");
+        ws.onmessage = (msg) => {
+            target.innerHTML = "Server sent: " + msg.data;
+        };
+    </script>
+    <div></div>
+</body>
+</html>

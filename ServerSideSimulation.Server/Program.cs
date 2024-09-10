@@ -4,7 +4,7 @@
     {
         static void Main(string[] args)
         {
-            var server = new WebSocketServer();
+            var server = new WebServer();
             server.Run().Wait();
         }
     }

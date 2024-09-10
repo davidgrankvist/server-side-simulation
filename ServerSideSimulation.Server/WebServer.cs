@@ -4,8 +4,10 @@ using System.Text;
 
 namespace ServerSideSimulation.Server
 {
-    internal class WebSocketServer
+    internal class WebServer
     {
+        private static readonly string baseUrl = "http://localhost:8080";
+
         public Task Run()
         {
             return Task.Run(StartListener);
@@ -14,7 +16,7 @@ namespace ServerSideSimulation.Server
         private static async Task StartListener()
         {
             var httpListener = new HttpListener();
-            var endPoint = "http://localhost:8080/ws/";
+            var endPoint = baseUrl + "/";
             httpListener.Prefixes.Add(endPoint);
             httpListener.Start();
             Console.WriteLine($"Listening on {endPoint}");
@@ -30,7 +32,7 @@ namespace ServerSideSimulation.Server
         {
             try
             {
-                await HandleRequest(context);
+                await RouteRequest(context);
             }
             catch (Exception ex)
             {
@@ -38,9 +40,56 @@ namespace ServerSideSimulation.Server
             }
         }
 
-        private static async Task HandleRequest(HttpListenerContext context)
+        private static async Task RouteRequest(HttpListenerContext context)
         {
-            Console.WriteLine("Incoming request.");
+            var url = context.Request.Url?.ToString() ?? "";
+            var path = url.Length >= baseUrl.Length ? url.Remove(0, baseUrl.Length) : url;
+
+            Console.WriteLine($"Routing request for path {path}");
+
+            if (path.StartsWith("/ws"))
+            {
+                await HandleWebsocketRequest(context);
+            }
+            else if (path == "/" || path.StartsWith("/index.html"))
+            {
+                await HandleFileRequest(context, "/index.html");
+            }
+            else
+            {
+                Console.WriteLine("Route not found. Returning 404.");
+                context.Response.StatusCode = 404;
+                context.Response.Close();
+            }
+        }
+
+        private static async Task HandleFileRequest(HttpListenerContext context, string path)
+        {
+            Console.WriteLine("Incoming file request");
+
+            var root = new string[] { "wwwroot" };
+            var pathSegments =  path.Split('/');
+            var filePath = Path.Combine(root.Concat(pathSegments).ToArray());
+
+            Console.WriteLine("Serving", filePath);
+
+            if (!File.Exists(filePath))
+            {
+                context.Response.StatusCode = 404;
+                context.Response.Close();
+                return;
+            }
+
+            var fileBytes = await File.ReadAllBytesAsync(filePath);
+            context.Response.ContentType = "text/html";
+            context.Response.ContentLength64 = fileBytes.Length;
+
+            await context.Response.OutputStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+        }
+
+        private static async Task HandleWebsocketRequest(HttpListenerContext context)
+        {
+            Console.WriteLine("Incoming ws request.");
 
             if (!context.Request.IsWebSocketRequest)
             {
