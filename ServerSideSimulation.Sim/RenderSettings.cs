@@ -1,13 +1,15 @@
-﻿namespace ServerSideSimulation.Sim
+﻿using ServerSideSimulation.Lib.Channels;
+
+namespace ServerSideSimulation.Sim
 {
     internal class RenderSettings
     {
-        public readonly BitmapChannel Channel;
+        public readonly BoundedChannel Channel;
         public readonly int ScreenWidth;
         public readonly int ScreenHeight;
         public readonly int Fps;
 
-        public RenderSettings(BitmapChannel channel, int screenWidth, int screenHeight, int fps)
+        public RenderSettings(BoundedChannel channel, int screenWidth, int screenHeight, int fps)
         {
             Channel = channel;
             ScreenWidth = screenWidth;

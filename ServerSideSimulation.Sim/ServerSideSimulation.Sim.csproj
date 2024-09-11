@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ServerSideSimulation.Lib\ServerSideSimulation.Lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Lib\Raylib\raylib.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  <TargetPath>%(Filename)%(Extension)</TargetPath>

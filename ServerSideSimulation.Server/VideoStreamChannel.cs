@@ -1,48 +1,55 @@
-﻿using System.Threading.Channels;
+﻿using ServerSideSimulation.Lib.Channels;
 
 namespace ServerSideSimulation.Server
 {
-    // TODO(improvement): reuse sim channel code
     internal class VideoStreamChannel
     {
-        private Channel<byte[]> channel;
+        private readonly BoundedChannel channel;
         private readonly int capacity;
+
+        private int writeCount;
+        private List<byte[]> initialFrames;
+        private int numInitialFrames = 2;
+
+        public bool HasDroppedInitialFrames => writeCount > capacity;
+        public IEnumerable<byte[]> InitialFrames => initialFrames;
 
         public VideoStreamChannel(int capacity)
         {
             this.capacity = capacity;
+            initialFrames = [];
+            channel = BoundedChannel.CreateSingleWriteMultiRead(capacity);
         }
 
         public void Open()
         {
-            channel = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(capacity)
-            {
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleWriter = true,
-                SingleReader = false,
-            });
+            channel.Open();
         }
 
         public void Close()
         {
-            channel.Writer.Complete();
+            channel.Close();
+            writeCount = 0;
+            initialFrames.Clear();
         }
 
         public void Write(byte[] data)
         {
-            channel.Writer.TryWrite(data);
+            channel.Write(data);
+
+            if (writeCount < capacity + numInitialFrames)
+            {
+                if (writeCount < numInitialFrames)
+                {
+                    initialFrames.Add(data);
+                }
+                writeCount++;
+            }
         }
 
-        public async IAsyncEnumerable<byte[]> ReadAllAsync()
+        public IAsyncEnumerable<byte[]> ReadAllAsync()
         {
-            while (await channel.Reader.WaitToReadAsync())
-            {
-                channel.Reader.TryRead(out var data);
-                if (data != null)
-                {
-                    yield return data;
-                }
-            }
+            return channel.ReadAllAsync();
         }
     }
 }

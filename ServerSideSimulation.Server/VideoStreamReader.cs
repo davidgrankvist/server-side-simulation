@@ -31,22 +31,35 @@ namespace ServerSideSimulation.Server
 
         private async Task StartVideoStreamListener(CancellationToken cancellation)
         {
-            Console.WriteLine("Starting video stream TCP listener.");
+            var host = "127.0.0.1";
+            var port = 12345;
+            Console.WriteLine($"Starting video stream TCP client at {host}:{port}");
             using (var client = new TcpClient())
             {
-                await client.ConnectAsync("127.0.0.1", 12345);
+                await client.ConnectAsync(host, port);
                 Console.WriteLine("Connected to video stream. Starting stream loop.");
 
                 using (var stream = client.GetStream())
                 {
-                    var buffer = new byte[1024];
+                    // Calculate buffer size. Video should be compressed, but this is an upper bound based on the bitmap size.
+                    var bitmapSize = 800 * 800 * 4;
+                    var fragmentDurationSeconds = 1;
+                    var fps = 30;
+                    var framesPerFragment = fps * fragmentDurationSeconds;
+                    var bufferSize = bitmapSize * framesPerFragment;
+
+                    var inputBuffer = new byte[bufferSize];
                     while (!cancellation.IsCancellationRequested)
                     {
-                        var size = await stream.ReadAsync(buffer, cancellation);
+                        var size = await stream.ReadAsync(inputBuffer, cancellation);
                         var bytesRead = new byte[size];
-                        Array.Copy(buffer, bytesRead, bytesRead.Length);
+                        Array.Copy(inputBuffer, bytesRead, bytesRead.Length);
 
-                        channel.Write(bytesRead);
+                        if (size > 0)
+                        {
+                            Console.WriteLine($"VIDEO FRAME SIZE: {bytesRead.Length}");
+                            channel.Write(bytesRead);
+                        }
                     }
                 }
             }

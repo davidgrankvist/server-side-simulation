@@ -4,9 +4,10 @@
     {
         static void Main(string[] args)
         {
-            var channel = new VideoStreamChannel(100);
+            var channel = new VideoStreamChannel(5);
             var reader = new VideoStreamReader(channel);
             var server = new WebServer(channel);
+            var proxy = new VideoStreamProxy(channel);
 
             var cancelSrc = new CancellationTokenSource();
 
@@ -14,12 +15,15 @@
 
             var videoStreamTask = reader.Run(cancelSrc.Token);
             var webServerTask = server.Run();
+            var proxyTask = proxy.Run(cancelSrc.Token);
 
-            Task.WaitAny(webServerTask, videoStreamTask);
+            var tasks = new Task[] { videoStreamTask, webServerTask, proxyTask };
+
+            Task.WaitAny(tasks);
 
             cancelSrc.Cancel();
 
-            Task.WaitAll(webServerTask, videoStreamTask);
+            Task.WaitAll(tasks);
 
             channel.Close();
         }

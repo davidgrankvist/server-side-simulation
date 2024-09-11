@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ServerSideSimulation.Lib\ServerSideSimulation.Lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="wwwroot\index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

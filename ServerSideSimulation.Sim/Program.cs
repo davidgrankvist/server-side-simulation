@@ -1,10 +1,12 @@
-﻿namespace ServerSideSimulation.Sim
+﻿using ServerSideSimulation.Lib.Channels;
+
+namespace ServerSideSimulation.Sim
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            var settings = new RenderSettings(new BitmapChannel(10), 800, 800, 60);
+            var settings = new RenderSettings(BoundedChannel.CreateSingleReadWrite(10), 800, 800, 30);
             var simulation = new Simulation(settings);
             var encoder = new VideoEncoder(settings);
 

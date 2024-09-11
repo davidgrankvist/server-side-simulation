@@ -90,7 +90,10 @@ namespace ServerSideSimulation.Sim
              * Scripts\render_tcp_video.bat
              */
             frameCountGuard = false;
-            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345\\?listen");
+            //return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -f mpegts tcp://127.0.0.1:12345\\?listen");
+            return CreateFfMpegProcess($"-f rawvideo -pix_fmt rgba -s {settings.ScreenWidth}x{settings.ScreenHeight} -r {settings.Fps} -i - -c:v libx264 -pix_fmt yuv420p -movflags +frag_keyframe+empty_moov -frag_duration 1000000 -f mp4 tcp://127.0.0.1:12345\\?listen");
+            // ffmpeg -f rawvideo -pix_fmt rgb24 -s 1920x1080 -r 30 -i - -c:v libx264 -pix_fmt yuv420p -movflags +frag_keyframe+empty_moov -f mp4 tcp://127.0.0.1:12345
+
         }
 
         // output to mp4 file for manual testing
@@ -107,7 +110,6 @@ namespace ServerSideSimulation.Sim
 
         private Process CreateFfMpegProcess(string args)
         {
-            var outputFile = Path.Combine(AppContext.BaseDirectory, "output.mp4");
             var ffmpegProcess = new Process
             {
                 StartInfo = new ProcessStartInfo

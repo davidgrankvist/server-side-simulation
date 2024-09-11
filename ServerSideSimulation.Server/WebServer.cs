@@ -73,14 +73,17 @@ namespace ServerSideSimulation.Server
         {
             Console.WriteLine("Incoming file request");
 
-            var root = new string[] { "wwwroot" };
+            var root = "wwwroot";
             var pathSegments =  path.Split('/');
-            var filePath = Path.Combine(root.Concat(pathSegments).ToArray());
+            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            var filePath = Path.Combine(new string[] { baseDirectory, root }.Concat(pathSegments).ToArray());
 
             Console.WriteLine("Serving", filePath);
 
             if (!File.Exists(filePath))
             {
+                Console.WriteLine("File not found. Returning 404.");
                 context.Response.StatusCode = 404;
                 context.Response.Close();
                 return;
@@ -124,6 +127,16 @@ namespace ServerSideSimulation.Server
 
         private async Task RunSendLoop(WebSocket ws, CancellationToken cancellation)
         {
+            if (channel.HasDroppedInitialFrames)
+            {
+                Console.WriteLine("The initial frames were dropped. Sending as separate messages");
+                foreach (var message in channel.InitialFrames)
+                {
+                    Console.WriteLine($"Writing header of size {message.Length}");
+                    await ws.SendAsync(message, WebSocketMessageType.Binary, true, cancellation);
+                }
+            }
+
             Console.WriteLine("Starting send message loop.");
             await foreach (var message in channel.ReadAllAsync())
             {
