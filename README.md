@@ -11,11 +11,15 @@ This project is about rendering a simulation server side and stream it as video 
 This is a work in progress, but here is the general idea.
 
 ```
-Simulation -> Video Encoder -> Server -> Client
+Simulation -> Encoder -> Server -> Client
 ```
 
 Steps:
 - The simulation renders a bitmap to an off screen buffer
-- The bitmaps are passed to a video encoder that outputs a video stream
-- The server listens to the video stream and forwards it to connected clients
-- The client renders the video stream
+- The bitmaps are passed through an encoder
+- The server listens to the stream of encoded bitmaps and forwards them to connected clients
+- The client decodes and renders the bitmaps
+
+### Docs
+
+To see some ideas I tried out, see [Log.md](./Docs/Log.md).
