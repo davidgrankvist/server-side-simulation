@@ -1,96 +1,46 @@
 <html>
 <body>
     <script>
-        const mediaSource = new MediaSource();
+        const width = 800;
+        const height = 800;
+        const pixelSize = 4;
 
-        const videoElement = document.createElement("video");
-        document.body.appendChild(videoElement);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
 
-        videoElement.controls = true;
-        videoElement.autoplay = true;
-        videoElement.src = URL.createObjectURL(mediaSource);
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.createImageData(width, height);
+        const buffer = new Uint8Array(width * height * pixelSize);
 
-        mediaSource.addEventListener("sourceopen", sourceOpen, false);
-        mediaSource.addEventListener("sourceclose", function (event) {
-            console.log("MEDIA SOURCE CLOSE:", event);
-        }, false);
-        mediaSource.addEventListener("sourceended", function (event) {
-            console.log("MEDIA SOURCE ENDED:", event);
-        }, false);
+        const socket = new WebSocket('ws://localhost:8080/ws');
+        socket.binaryType = 'arraybuffer';
 
-        function sourceOpen(_) {
-            console.log("MEDIA SOURCE OPEN")
-            URL.revokeObjectURL(videoElement.src);
+        socket.onmessage = function (event) {
+            const data = new Uint8Array(event.data);
 
-            console.log("ADD SOURCE BUFFER")
-            const sourceBuffer = mediaSource.addSourceBuffer("video/mp4; codecs=\"avc1.4d401f\"");
-            sourceBuffer.mode = "segments";
+            if (data.length === buffer.length) {
+                buffer.set(data);
+                imageData.data.set(buffer);
+                ctx.putImageData(imageData, 0, 0);
+            } else {
+                console.warn("Mismatching buffer size. Skipping frame.");
+                console.warn("Exptected: " + buffer.length + ", Actual: " + data.length);
+            }
+        };
 
-            sourceBuffer.addEventListener("error", function (event) {
-                console.error("SOURCE BUFFER ERROR:", event);
-                if (event.error) {
-                    console.error("Error Details:", event.error);
-                }
-            });
+        socket.onopen = function () {
+            console.log('Connected to the server.');
+        };
 
-            sourceBuffer.addEventListener("abort", function (event) {
-                console.error("SOURCE BUFFER ABORT:", event);
-            });
+        socket.onerror = function (error) {
+            console.error('WebSocket Error: ', error);
+        };
 
-
-            sourceBuffer.addEventListener("update", function (event) {
-                console.log("SOURCE BUFFER UPDATE:", event);
-            });
-
-
-            sourceBuffer.addEventListener("updatestart", function (event) {
-                console.log("SOURCE BUFFER UPDATE START:", event);
-            });
-
-
-            sourceBuffer.addEventListener("updateend", function (event) {
-                console.log("SOURCE BUFFER UPDATE END:", event);
-            });
-
-            fetchFragments(sourceBuffer);
-        }
-
-        function fetchFragments(sourceBuffer) {
-            console.log("FETCH FRAGMENTS");
-            const ws = new WebSocket("ws://localhost:8080/ws/");
-            ws.binaryType = "arraybuffer";
-
-            ws.onmessage = function (event) {
-                var ds = new Date().toISOString();
-                console.log("ON MESSAGE (" + ds + ")", event);
-
-                if (mediaSource.readyState !== "open") {
-                    console.log("Media source not open. Skipping.");
-                    return;
-                }
-
-                try {
-                    var videoData = new Uint8Array(event.data);
-                    if (!sourceBuffer.updating) {
-                        sourceBuffer.appendBuffer(videoData);
-                    } else {
-                        console.log("Source buffer is updating. Skipping.")
-                    }
-                } catch (e)
-                {
-                    console.error("CAUGHT ERROR IN ON MESSAGE:", e);
-                }
-            };
-
-            ws.onerror = function (error) {
-                console.error("WEBSOCKET ERROR", error);
-            };
-
-            ws.onclose = function () {
-                console.log("WEBSOCKET CLOSE");
-            };
-        }
-
+        socket.onclose = function () {
+            console.log('WebSocket connection closed.');
+        };
     </script>
 </body>
 </html>

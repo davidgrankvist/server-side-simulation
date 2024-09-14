@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using ServerSideSimulation.Lib.Channels;
+using System.Net;
 using System.Net.WebSockets;
 
 namespace ServerSideSimulation.Server
@@ -6,9 +7,9 @@ namespace ServerSideSimulation.Server
     internal class WebServer
     {
         private static readonly string baseUrl = "http://localhost:8080";
-        private readonly VideoStreamChannel channel;
+        private readonly BoundedChannel channel;
 
-        public WebServer(VideoStreamChannel channel)
+        public WebServer(BoundedChannel channel)
         {
             this.channel = channel;
         }
@@ -127,15 +128,15 @@ namespace ServerSideSimulation.Server
 
         private async Task RunSendLoop(WebSocket ws, CancellationToken cancellation)
         {
-            if (channel.HasDroppedInitialFrames)
-            {
-                Console.WriteLine("The initial frames were dropped. Sending as separate messages");
-                foreach (var message in channel.InitialFrames)
-                {
-                    Console.WriteLine($"Writing header of size {message.Length}");
-                    await ws.SendAsync(message, WebSocketMessageType.Binary, true, cancellation);
-                }
-            }
+            //if (channel.HasDroppedInitialFrames)
+            //{
+            //    Console.WriteLine("The initial frames were dropped. Sending as separate messages");
+            //    foreach (var message in channel.InitialFrames)
+            //    {
+            //        Console.WriteLine($"Writing header of size {message.Length}");
+            //        await ws.SendAsync(message, WebSocketMessageType.Binary, true, cancellation);
+            //    }
+            //}
 
             Console.WriteLine("Starting send message loop.");
             await foreach (var message in channel.ReadAllAsync())

@@ -1,13 +1,17 @@
-﻿namespace ServerSideSimulation.Server
+﻿using ServerSideSimulation.Lib.Channels;
+using ServerSideSimulation.Lib.Tcp;
+using System.Net;
+
+namespace ServerSideSimulation.Server
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            var channel = new VideoStreamChannel(5);
-            var reader = new VideoStreamReader(channel);
+            var channel = BoundedChannel.CreateSingleWriteMultiRead(5);
+            var reader = new TcpClientWrapper(IPEndPoint.Parse("127.0.0.1:12345"), new FrameReceiver(channel, 800 * 800 * 4));
             var server = new WebServer(channel);
-            var proxy = new VideoStreamProxy(channel);
+            var proxy = new TcpServer(IPEndPoint.Parse("127.0.0.1:12346"), new FrameSender(channel));
 
             var cancelSrc = new CancellationTokenSource();
 
