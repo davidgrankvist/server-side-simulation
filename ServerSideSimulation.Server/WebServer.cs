@@ -1,4 +1,5 @@
 ﻿using ServerSideSimulation.Lib.Channels;
+using ServerSideSimulation.Lib.Encoding;
 using System.Net;
 using System.Net.WebSockets;
 
@@ -128,22 +129,25 @@ namespace ServerSideSimulation.Server
 
         private async Task RunSendLoop(WebSocket ws, CancellationToken cancellation)
         {
-            //if (channel.HasDroppedInitialFrames)
-            //{
-            //    Console.WriteLine("The initial frames were dropped. Sending as separate messages");
-            //    foreach (var message in channel.InitialFrames)
-            //    {
-            //        Console.WriteLine($"Writing header of size {message.Length}");
-            //        await ws.SendAsync(message, WebSocketMessageType.Binary, true, cancellation);
-            //    }
-            //}
-
             Console.WriteLine("Starting send message loop.");
+            var didSendFirstFrame = false;
+            var view = new FrameView();
             await foreach (var message in channel.ReadAllAsync())
             {
                 if (ws.State != WebSocketState.Open ||cancellation.IsCancellationRequested)
                 {
                     break;
+                }
+
+                // make sure the initial frame is an I-Frame
+                view.SetData(message);
+                if (!didSendFirstFrame && view.Type == FrameType.IFrame)
+                {
+                    didSendFirstFrame = true;
+                }
+                if (!didSendFirstFrame)
+                {
+                    continue;
                 }
 
                 await ws.SendAsync(message, WebSocketMessageType.Binary, true, cancellation);

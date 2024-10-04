@@ -22,16 +22,17 @@ namespace ServerSideSimulation.Lib.Tcp
             using (var stream = client.GetStream())
             {
                 var inputBuffer = new byte[bufferSize];
-                var outputBuffer = new byte[bufferSize];
                 while (!cancellation.IsCancellationRequested)
                 {
                     var size = await stream.ReadAsync(inputBuffer, cancellation);
-                    Array.Copy(inputBuffer, outputBuffer, size);
-
-                    if (size > 0)
+                    if (size <= 0)
                     {
-                        channel.Write(outputBuffer);
+                        continue;
                     }
+
+                    var outputBuffer = new byte[size];
+                    Array.Copy(inputBuffer, outputBuffer, size);
+                    channel.Write(outputBuffer);
                 }
             }
         }

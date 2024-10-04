@@ -61,7 +61,7 @@ namespace ServerSideSimulation.Sim
                 Raylib.BeginTextureMode(renderTexture);
                 Raylib.ClearBackground(Raylib.Colors.White);
                 angle += angleDelta;
-                Raylib.DrawRectanglePro(rect, origin, angle, Raylib.Colors.Blue);
+                Raylib.DrawRectanglePro(rect, origin, angle, Raylib.Colors.Black);
                 Raylib.EndTextureMode();
 
                 // bitmap extraction

@@ -18,7 +18,7 @@
         socket.binaryType = 'arraybuffer';
 
         socket.onmessage = function (event) {
-            const data = new Uint8Array(event.data);
+            const data = decodeFrame(new Uint8Array(event.data));
 
             if (data.length === buffer.length) {
                 buffer.set(data);
@@ -41,6 +41,29 @@
         socket.onclose = function () {
             console.log('WebSocket connection closed.');
         };
+
+        function decodeFrame(encodedFrame) {
+            var outputBuffer = new Uint8Array(buffer.length);
+            var headerLength = 6;
+            var frameType = encodedFrame[1];
+
+            var data = encodedFrame.slice(headerLength)
+            if (data.length * pixelSize !== outputBuffer.length) {
+                console.warn("Mismatching encoded frame size. Skipping frame.");
+                console.warn("Exptected: " + buffer.length + ", Actual: " + data.length);
+                return encodedFrame;
+            }
+
+            // decode indexed colors as gray scales
+            for (let i = 0, iOut = 0; i < data.length; i++, iOut += pixelSize) {
+                outputBuffer[iOut] = data[i];
+                outputBuffer[iOut+1] = data[i];
+                outputBuffer[iOut+2] = data[i];
+                outputBuffer[iOut+3] = 0xFF;
+            }
+
+            return outputBuffer;
+        }
     </script>
 </body>
 </html>
