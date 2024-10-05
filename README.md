@@ -22,4 +22,8 @@ Steps:
 
 ### Docs
 
-To see some ideas I tried out, see [Log.md](./Docs/Log.md).
+To see some ideas I have tried out, see [Log.md](./Docs/Log.md).
+
+## Resources
+
+ThePrimeagen has a [great video](https://www.youtube.com/watch?v=3f9tbqSIm-E) about rendering Doom server side.
