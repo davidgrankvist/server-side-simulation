@@ -10,8 +10,17 @@ This project is about rendering a simulation server side and stream it as video 
 
 This is a work in progress, but here is the general idea.
 
-```
-Simulation -> Encoder -> Server -> Client
+```mermaid
+---
+config:
+  layout: elk
+  look: handDrawn
+  theme: dark
+---
+flowchart LR
+  Simulation -->|"Bitmaps"| Encoder
+  Encoder -->|"Frames"| Server
+  Server -->|"Frames"| Client
 ```
 
 Steps:
@@ -21,6 +30,8 @@ Steps:
 - The client decodes and renders the bitmaps
 
 ### Docs
+
+For more architecture details and diagrams, see [Architecture.md](./Docs/Architecture.md).
 
 To see some ideas I have tried out, see [Log.md](./Docs/Log.md).
 
