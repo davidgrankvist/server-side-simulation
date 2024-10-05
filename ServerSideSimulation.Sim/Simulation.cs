@@ -45,7 +45,7 @@ namespace ServerSideSimulation.Sim
             Raylib.SetTraceLogLevel(Raylib.TraceLogLevel.LOG_NONE);
             if (headlessMode)
             {
-                // raylib is not built for headless mode, so allocate a small buffer instead
+                Raylib.SetConfigFlags(Raylib.ConfigFlags.FLAG_WINDOW_HIDDEN);
                 Raylib.InitWindow(1, 1, title);
             }
             else
