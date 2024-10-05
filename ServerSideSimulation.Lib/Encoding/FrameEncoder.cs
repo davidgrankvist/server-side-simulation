@@ -31,6 +31,7 @@ namespace ServerSideSimulation.Sim
             else
             {
                 var colorDeltas = deltaEncoder.Encode(prevIndexedColorsPixels, indexedColors);
+                prevIndexedColorsPixels = indexedColors;
                 // TODO(optimize): use RLE
                 frame = Frame.CreatePFrame(colorDeltas);
             }

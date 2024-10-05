@@ -63,6 +63,7 @@
                 prevIndexedColors = indexedColors;
             } else if (frameType === 1) {
                 data = decodeDelta(prevIndexedColors, indexedColors);
+                prevIndexedColors = data;
             } else {
                 console.warn("Unknown frame type " + frameType + ". Skipping.");
                 return encodedFrame;
@@ -71,9 +72,9 @@
             // decode indexed colors as gray scales
             for (let i = 0, iOut = 0; i < data.length; i++, iOut += pixelSize) {
                 outputBuffer[iOut] = data[i];
-                outputBuffer[iOut+1] = data[i];
-                outputBuffer[iOut+2] = data[i];
-                outputBuffer[iOut+3] = 0xFF;
+                outputBuffer[iOut + 1] = data[i];
+                outputBuffer[iOut + 2] = data[i];
+                outputBuffer[iOut + 3] = 0xFF;
             }
 
             return outputBuffer;
