@@ -26,7 +26,7 @@
                 ctx.putImageData(imageData, 0, 0);
             } else {
                 console.warn("Mismatching buffer size. Skipping frame.");
-                console.warn("Exptected: " + buffer.length + ", Actual: " + data.length);
+                console.warn("Expected: " + buffer.length + ", Actual: " + data.length);
             }
         };
 
@@ -42,15 +42,29 @@
             console.log('WebSocket connection closed.');
         };
 
+        let prevIndexedColors;
         function decodeFrame(encodedFrame) {
-            var outputBuffer = new Uint8Array(buffer.length);
-            var headerLength = 6;
-            var frameType = encodedFrame[1];
+            const outputBuffer = new Uint8Array(buffer.length);
+            const headerLength = 6;
+            const frameType = encodedFrame[1];
 
-            var data = encodedFrame.slice(headerLength)
-            if (data.length * pixelSize !== outputBuffer.length) {
+            const encodedData = encodedFrame.slice(headerLength)
+            if (encodedData.length * pixelSize !== outputBuffer.length) {
                 console.warn("Mismatching encoded frame size. Skipping frame.");
-                console.warn("Exptected: " + buffer.length + ", Actual: " + data.length);
+                console.warn("Expected: " + buffer.length + ", Actual: " + encodedData.length);
+                return encodedFrame;
+            }
+
+            // check frame type and decode delta
+            const indexedColors = encodedData;
+            let data;
+            if (frameType === 0) {
+                data = indexedColors;
+                prevIndexedColors = indexedColors;
+            } else if (frameType === 1) {
+                data = decodeDelta(prevIndexedColors, indexedColors);
+            } else {
+                console.warn("Unknown frame type " + frameType + ". Skipping.");
                 return encodedFrame;
             }
 
@@ -63,6 +77,14 @@
             }
 
             return outputBuffer;
+        }
+
+        function decodeDelta(first, second) {
+            const frame = new Uint8Array(first.length);
+            for (let i = 0; i < first.length; i++) {
+                frame[i] = first[i] ^ second[i];
+            }
+            return frame;
         }
     </script>
 </body>

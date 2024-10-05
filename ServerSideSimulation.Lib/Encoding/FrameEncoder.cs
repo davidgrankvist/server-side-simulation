@@ -1,17 +1,20 @@
-﻿namespace ServerSideSimulation.Sim
+﻿using ServerSideSimulation.Lib.Encoding;
+
+namespace ServerSideSimulation.Sim
 {
-    internal class FrameEncoder
+    public class FrameEncoder
     {
         private readonly ColorEncoder colorEncoder;
-        private readonly byte[] buffer;
+        private readonly DeltaEncoder deltaEncoder;
 
         private int frameIndex = 0;
         private readonly int iFrameFrequency;
+        private byte[] prevIndexedColorsPixels;
 
         public FrameEncoder(int numPixels, int iFrameFrequency)
         {
             colorEncoder = new ColorEncoder(numPixels);
-            buffer = new byte[numPixels];
+            deltaEncoder = new DeltaEncoder(numPixels);
             this.iFrameFrequency = iFrameFrequency;
         }
 
@@ -22,12 +25,14 @@
             Frame frame;
             if (frameIndex == 0)
             {
+                prevIndexedColorsPixels = indexedColors;
                 frame = Frame.CreateIFrame(indexedColors);
             }
             else
             {
-                // TODO(optimize): do delta encoding here
-                frame = Frame.CreatePFrame(indexedColors);
+                var colorDeltas = deltaEncoder.Encode(prevIndexedColorsPixels, indexedColors);
+                // TODO(optimize): use RLE
+                frame = Frame.CreatePFrame(colorDeltas);
             }
 
             frameIndex = (frameIndex + 1) % iFrameFrequency;

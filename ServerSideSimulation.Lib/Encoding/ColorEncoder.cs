@@ -1,19 +1,20 @@
-﻿namespace ServerSideSimulation.Sim
+﻿namespace ServerSideSimulation.Lib.Encoding
 {
     /// <summary>
     /// Converts RGBA pixels to one-byte color indicies.
     /// </summary>
-    internal class ColorEncoder
+    public class ColorEncoder
     {
-        private readonly byte[] buffer;
+        private readonly int bitmapSize;
 
         public ColorEncoder(int bitmapSize)
         {
-            buffer = new byte[bitmapSize];
+            this.bitmapSize = bitmapSize;
         }
 
         public byte[] Encode(byte[] pixelData)
         {
+            var buffer = new byte[bitmapSize];
             const int bytesPerPixel = 4;
             for (int iBuffer = 0, iPixelData = 0; iBuffer < buffer.Length; iBuffer++, iPixelData += bytesPerPixel)
             {

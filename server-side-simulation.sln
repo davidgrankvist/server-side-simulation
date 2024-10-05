@@ -10,7 +10,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerSideSimulation.Sim", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerSideSimulation.Server", "ServerSideSimulation.Server\ServerSideSimulation.Server.csproj", "{DA8ACB16-98B1-45CF-A343-8FCA3F4EF817}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerSideSimulation.Lib", "ServerSideSimulation.Lib\ServerSideSimulation.Lib.csproj", "{A15401FB-EDB1-44A4-8703-A4F55C51DFD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerSideSimulation.Lib", "ServerSideSimulation.Lib\ServerSideSimulation.Lib.csproj", "{A15401FB-EDB1-44A4-8703-A4F55C51DFD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerSideSimulation.Lib.Test", "ServerSideSimulation.Lib.Test\ServerSideSimulation.Lib.Test.csproj", "{81A1B1AB-4127-49C9-A78C-6CAB4B327466}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +32,10 @@ Global
 		{A15401FB-EDB1-44A4-8703-A4F55C51DFD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A15401FB-EDB1-44A4-8703-A4F55C51DFD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A15401FB-EDB1-44A4-8703-A4F55C51DFD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81A1B1AB-4127-49C9-A78C-6CAB4B327466}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81A1B1AB-4127-49C9-A78C-6CAB4B327466}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81A1B1AB-4127-49C9-A78C-6CAB4B327466}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81A1B1AB-4127-49C9-A78C-6CAB4B327466}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

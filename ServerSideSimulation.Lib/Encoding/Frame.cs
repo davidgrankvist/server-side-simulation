@@ -5,7 +5,7 @@ namespace ServerSideSimulation.Sim
     /// <summary>
     /// A frame structure to encode.
     /// </summary>
-    internal readonly struct Frame : IBinaryFrame
+    public readonly struct Frame : IBinaryFrame
     {
         public FrameVersion Version {get; }
 
