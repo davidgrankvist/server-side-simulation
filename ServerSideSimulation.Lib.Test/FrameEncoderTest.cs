@@ -11,7 +11,7 @@ namespace ServerSideSimulation.Lib.Test
         public void ShouldEncodeValidIFrame()
         {
             var numPixels = 2;
-            var encoder = new FrameEncoder(numPixels, 1);
+            var encoder = new FrameEncoder(numPixels, 1, new DummyEncoder());
             var data = new byte[] { 0, 0, 0, 0, 1, 1, 1, 1 };
             var expected = new byte[] { 0, 1 };
 
@@ -25,7 +25,7 @@ namespace ServerSideSimulation.Lib.Test
         {
             var numPixels = 2;
             var iFrameFrequency = 3;
-            var encoder = new FrameEncoder(numPixels, iFrameFrequency);
+            var encoder = new FrameEncoder(numPixels, iFrameFrequency, new DummyEncoder());
             var deltaEncoder = new DeltaEncoder(numPixels);
 
             var rawFrame1 = new byte[] { 0, 0, 0, 0, 1, 1, 1, 1 };
@@ -51,7 +51,7 @@ namespace ServerSideSimulation.Lib.Test
         {
             var numPixels = 2;
             var iFrameFrequency = 3;
-            var encoder = new FrameEncoder(numPixels, iFrameFrequency);
+            var encoder = new FrameEncoder(numPixels, iFrameFrequency, new DummyEncoder());
             var rawFrame = new byte[] { 0, 0, 0, 0, 1, 1, 1, 1 };
 
             var frame1 = encoder.Encode(rawFrame);
@@ -70,7 +70,7 @@ namespace ServerSideSimulation.Lib.Test
         {
             var numPixels = 2;
             var iFrameFrequency = 3;
-            var encoder = new FrameEncoder(numPixels, iFrameFrequency);
+            var encoder = new FrameEncoder(numPixels, iFrameFrequency, new DummyEncoder());
             var deltaEncoder = new DeltaEncoder(numPixels);
 
             var rawFrame1 = new byte[] { 255, 255, 255, 255, 1, 1, 1, 1 };
@@ -89,6 +89,19 @@ namespace ServerSideSimulation.Lib.Test
 
             AssertExtensions.AreEqual(deltaDecoded1, indexedColorData2);
             AssertExtensions.AreEqual(deltaDecoded2, indexedColorData3);
+        }
+
+        [TestMethod]
+        public void ShouldEncodeIFrameWithRle()
+        {
+            var numPixels = 2;
+            var encoder = new FrameEncoder(numPixels, 1, new RunLengthEncoder());
+            var data = new byte[] { 0, 0, 0, 0, 1, 1, 1, 1 };
+            var expected = EncoderTestHelpers.ToRuns(1, 0, 1, 1);
+
+            var iFrame = encoder.Encode(data);
+
+            AssertExtensions.AreEqual(expected, iFrame.Data);
         }
     }
 }

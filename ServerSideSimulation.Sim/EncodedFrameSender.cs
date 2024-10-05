@@ -1,4 +1,5 @@
 ﻿using ServerSideSimulation.Lib.Channels;
+using ServerSideSimulation.Lib.Encoding;
 using ServerSideSimulation.Lib.Tcp;
 using System.Net.Sockets;
 
@@ -16,7 +17,11 @@ namespace ServerSideSimulation.Sim
 
         public EncodedFrameSender(RenderSettings settings)
         {
-            encoder = new FrameEncoder(settings.ScreenWidth * settings.ScreenHeight, settings.Fps * secondsPerIFrame);
+            encoder = new FrameEncoder(
+                settings.ScreenWidth * settings.ScreenHeight,
+                settings.Fps * secondsPerIFrame,
+                new RunLengthEncoder()
+            );
             channel = settings.Channel;
         }
 

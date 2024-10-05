@@ -49,14 +49,10 @@
             const frameType = encodedFrame[1];
 
             const encodedData = encodedFrame.slice(headerLength)
-            if (encodedData.length * pixelSize !== outputBuffer.length) {
-                console.warn("Mismatching encoded frame size. Skipping frame.");
-                console.warn("Expected: " + buffer.length + ", Actual: " + encodedData.length);
-                return encodedFrame;
-            }
+            const decodedRleData = decodeRle(encodedData);
 
             // check frame type and decode delta
-            const indexedColors = encodedData;
+            const indexedColors = decodedRleData;
             let data;
             if (frameType === 0) {
                 data = indexedColors;
@@ -75,6 +71,37 @@
                 outputBuffer[iOut + 1] = data[i];
                 outputBuffer[iOut + 2] = data[i];
                 outputBuffer[iOut + 3] = 0xFF;
+            }
+
+            return outputBuffer;
+        }
+
+        function decodeRle(encodedFrame) {
+            const outputBuffer = new Uint8Array(width * height);
+
+            if (encodedFrame.length % 3 !== 0) {
+                console.warn("Expected RLE encoded frame to have 3-byte runs. Aborting. Received length is not divisble by 3: " + encodedFrame.length);
+                return outputBuffer;
+            }
+
+            let iOut = 0;
+            for (let i = 0; i < encodedFrame.length; i += 3) {
+                const countUpper = encodedFrame[i];
+                const countLower = encodedFrame[i + 1];
+                const value = encodedFrame[i + 2];
+
+                const count = (countUpper << 8) + countLower;
+                if (iOut + count > outputBuffer.length) {
+                    console.warn("Exceeded output length during RLE decoding. Aborting.");
+                    break;
+                }
+
+                outputBuffer.fill(value, iOut, iOut + count)
+                iOut += count;
+            }
+
+            if (iOut !== outputBuffer.length) {
+                console.warn("Unexpected RLE decode output length. Expected " + outputBuffer.length + " but got " + iOut);
             }
 
             return outputBuffer;

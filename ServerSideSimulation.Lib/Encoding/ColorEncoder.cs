@@ -3,7 +3,7 @@
     /// <summary>
     /// Converts RGBA pixels to one-byte color indicies.
     /// </summary>
-    public class ColorEncoder
+    public class ColorEncoder : IByteEncoder
     {
         private readonly int bitmapSize;
 
