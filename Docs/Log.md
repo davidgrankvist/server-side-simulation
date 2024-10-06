@@ -64,3 +64,38 @@ The client receives F1 and FX. It reconstructs F2 using XOR.
 ```
 F1 XOR FX = F1 XOR (F1 XOR F2) = (F1 XOR F1) XOR F2 = 0 XOR F2 = F2
 ```
+
+### Run-Length Encoding
+
+Run-Length Encoding (RLE) is based on the simple idea that repeated values can be replaced with a counter and a value. For example `0 0 0 0` can be encoded as `4 0`.
+
+When used in conjunction with XOR deltas, static values become easier to compress.
+
+Example:
+
+Let's say that two consecutive frames have these values.
+
+```
+F1 = 1 0 1 0 1 0 1 0 1 0 1 0 1 0
+F2 = 9 0 1 0 1 0 1 0 1 0 1 0 1 0
+```
+
+There are no sequences of repeated values, but only one value changed between the frames. The XOR delta becomes this
+
+```
+8 0 0 0 0 0 0 0 0 0 0 0 0 0
+```
+
+Which can be encoded with RLE as
+
+```
+1 8 13 0
+```
+
+#### Storing the count
+
+There is a trade-off in RLE: longer runs can compress more data, but also require more bytes to store large counts. If one-byte counters are used then the run length is at most `2^8 - 1 = 255` and each run requires two bytes. If two-byte counters are used then the run length is at most `2^16 - 1 = 65535` and each run is 3 bytes long.
+
+Example:
+
+Let's say that we have an 800x800 bitmap of indexed one-byte colors. That's `800 * 800 = 640000` bytes. In the best case, the entire bitmap has the same color. With one-byte runs, the bitmap can be compressed to `2 * 640000 / 255 ~ 5000`. With two-byte runs it can be compressed to `3 * 640000 / 65535 ~ 30`.

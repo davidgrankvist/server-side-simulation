@@ -51,9 +51,29 @@ sequenceDiagram
 
 ## Protocol
 
-Frame format:
+### Frame format
+
 ```
 ----------------------------------
 | version | type | length | data |
 ----------------------------------
 ```
+
+### Encoding scheme
+
+```mermaid
+---
+config:
+  layout: elk
+  look: handDrawn
+  theme: dark
+---
+flowchart LR
+  Bitmap --> IC[Indexed Colors]
+  IC --> D[XOR Delta Encoding]
+  D --> R[Run-Length Encoding]
+```
+
+### Late joiners
+
+Every nth frame is an I-Frame and the rest are P-Frames. On a new client connection, the server will wait for the next I-Frame before it starts forwarding frames to the client. This allows clients to connect at any point during the simulation.
