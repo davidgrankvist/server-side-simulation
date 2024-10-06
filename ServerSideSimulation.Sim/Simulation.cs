@@ -6,12 +6,12 @@ namespace ServerSideSimulation.Sim
     internal class Simulation
     {
         private readonly RenderSettings settings;
-        private bool headlessMode;
+        private readonly SimulationSettings simSettings;
 
-        public Simulation(RenderSettings settings, bool headlessMode = true)
+        public Simulation(RenderSettings settings, SimulationSettings simSettings)
         {
             this.settings = settings;
-            this.headlessMode = headlessMode;
+            this.simSettings = simSettings;
         }
 
         public void Run()
@@ -43,7 +43,7 @@ namespace ServerSideSimulation.Sim
             var angleDelta = 0.5f;
 
             Raylib.SetTraceLogLevel(Raylib.TraceLogLevel.LOG_NONE);
-            if (headlessMode)
+            if (simSettings.HeadlessMode)
             {
                 Raylib.SetConfigFlags(Raylib.ConfigFlags.FLAG_WINDOW_HIDDEN);
                 Raylib.InitWindow(1, 1, title);
@@ -65,13 +65,16 @@ namespace ServerSideSimulation.Sim
                 Raylib.EndTextureMode();
 
                 // bitmap extraction
-                var image = Raylib.LoadImageFromTexture(renderTexture.texture);
-                TransmitImage(image);
-                Raylib.UnloadImage(image);
+                if (simSettings.TransmitFrames)
+                {
+                    var image = Raylib.LoadImageFromTexture(renderTexture.texture);
+                    TransmitImage(image);
+                    Raylib.UnloadImage(image);
+                }
 
                 // always use begin/end drawing to allow closing the window
                 Raylib.BeginDrawing();
-                if (!headlessMode)
+                if (!simSettings.HeadlessMode)
                 {
                     // debug render to window
                     Raylib.ClearBackground(Raylib.Colors.White);
@@ -83,7 +86,7 @@ namespace ServerSideSimulation.Sim
             Raylib.CloseWindow();
         }
 
-        private byte[] IntPtrToByteArray(IntPtr ptr, int length)
+        private static byte[] IntPtrToByteArray(IntPtr ptr, int length)
         {
             var bytes = new byte[length];
             Marshal.Copy(ptr, bytes, 0, bytes.Length);

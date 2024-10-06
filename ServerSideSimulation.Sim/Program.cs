@@ -9,7 +9,15 @@ namespace ServerSideSimulation.Sim
         static void Main(string[] args)
         {
             var settings = new RenderSettings(BoundedChannel.CreateSingleReadWrite(10), 800, 800, 30);
-            var simulation = new Simulation(settings);
+            var simSettings = SimulationSettings.HeadlessServer;
+            var simulation = new Simulation(settings, simSettings);
+
+            if (!simSettings.TransmitFrames)
+            {
+                simulation.Run();
+                return;
+            }
+
             var server = new TcpServer(IPEndPoint.Parse("127.0.0.1:12345"), new EncodedFrameSender(settings));
 
             settings.Channel.Open();
