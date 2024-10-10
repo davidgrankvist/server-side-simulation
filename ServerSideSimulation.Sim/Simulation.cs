@@ -27,21 +27,6 @@ namespace ServerSideSimulation.Sim
             };
             var texturePos = new Raylib.Vector2();
 
-            var rect = new Raylib.Rectangle
-            {
-                x = 400,
-                y = 400,
-                width = 120,
-                height = 200
-            };
-            var angle = 0f;
-            var origin = new Raylib.Vector2
-            {
-                x = rect.width / 2,
-                y = rect.height / 2,
-            };
-            var angleDelta = 0.5f;
-
             Raylib.SetTraceLogLevel(Raylib.TraceLogLevel.LOG_NONE);
             if (simSettings.HeadlessMode)
             {
@@ -54,14 +39,81 @@ namespace ServerSideSimulation.Sim
             }
 
             var renderTexture = Raylib.LoadRenderTexture(settings.ScreenWidth, settings.ScreenHeight);
+            var shader = Raylib.LoadShader(Path.Combine("Shaders", "vertex.glsl"), Path.Combine("Shaders", "fragment.glsl"));
+
+            // define a plane mesh using 4 vertices and two triangles
+            float[] vertices = {
+                -0.5f, -0.5f, 0.0f,
+                 0.5f, -0.5f, 0.0f,
+                -0.5f,  0.5f, 0.0f,
+                 0.5f,  0.5f, 0.0f 
+            };
+            ushort[] triangleIndices = {
+                0, 1, 2,
+                1, 3, 2 
+            };
+            var mesh = new Raylib.Mesh();
+            Raylib.SetMeshVertices(ref mesh, vertices);
+            Raylib.SetMeshIndices(ref mesh, triangleIndices);
+            Raylib.UploadMeshHelper(ref mesh, true);
+
+            // create an unused material in order to call DrawMesh later
+            var materialMap = new Raylib.MaterialMap();
+            materialMap.texture = renderTexture.texture;
+            var materialMaps = new Raylib.MaterialMap[] { materialMap };
+            var material = new Raylib.Material();
+            material.shader = shader;
+            Raylib.SetMaterialParams(ref material, [0, 0, 0, 0]);
+            Raylib.SetMaterialMaps(ref material, materialMaps);
+
+            var angleLocation = Raylib.GetShaderLocation(shader, "angle");
+            var colorLocation = Raylib.GetShaderLocation(shader, "color");
+
+            var angle = 0f;
+            var angleSign = 1f;
+            var color = 0f;
+            var colorSign = 1;
+            var timeScale = 0.5f;
+
             Raylib.SetTargetFPS(settings.Fps);
             while (!Raylib.WindowShouldClose())
             {
+                angle += Raylib.GetFrameTime() * angleSign * timeScale;
+                if (angle >= MathF.PI / 4)
+                {
+                   angle = MathF.PI / 4;
+                   angleSign = -angleSign;
+                }
+                else if (angle <= 0f)
+                {
+                    angle = 0;
+                    angleSign = -angleSign;
+                }
+
+                color += Raylib.GetFrameTime() * colorSign * timeScale;
+                if (color >= 0.5f)
+                {
+                    color = 0.5f;
+                    colorSign = -colorSign;
+                }
+                else if (color <= 0f)
+                {
+                    color = 0f;
+                    colorSign = -colorSign;
+                }
+
+                Raylib.SetShaderValueHelper(shader, angleLocation, angle);
+                Raylib.SetShaderValueHelper(shader, colorLocation, color);
+
                 // primary rendering to target texture
                 Raylib.BeginTextureMode(renderTexture);
                 Raylib.ClearBackground(Raylib.Colors.White);
-                angle += angleDelta;
-                Raylib.DrawRectanglePro(rect, origin, angle, Raylib.Colors.Black);
+                Raylib.BeginShaderMode(shader);
+
+                // invoke a draw call to make sure rendering is done - the actual animation happens within the shaders
+                Raylib.DrawMesh(mesh, material, Raylib.Matrices.Identity);
+
+                Raylib.EndShaderMode();
                 Raylib.EndTextureMode();
 
                 // bitmap extraction
@@ -77,12 +129,12 @@ namespace ServerSideSimulation.Sim
                 if (!simSettings.HeadlessMode)
                 {
                     // debug render to window
-                    Raylib.ClearBackground(Raylib.Colors.White);
                     Raylib.DrawTextureRec(renderTexture.texture, textureRec, texturePos, Raylib.Colors.White);
                 }
                 Raylib.EndDrawing();
             }
 
+            Raylib.UnloadShader(shader);
             Raylib.CloseWindow();
         }
 

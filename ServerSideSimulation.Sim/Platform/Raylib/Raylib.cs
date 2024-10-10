@@ -95,6 +95,80 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
             FLAG_INTERLACED_HINT = 0x00010000    // Set to try enabling interlaced video format (for V3D)
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Shader
+        {
+            public uint id;
+            public IntPtr locs;
+        }
+
+        public enum ShaderUniformDataType
+        {
+            SHADER_UNIFORM_FLOAT = 0,       // Shader uniform type: float
+            SHADER_UNIFORM_VEC2,            // Shader uniform type: vec2 (2 float)
+            SHADER_UNIFORM_VEC3,            // Shader uniform type: vec3 (3 float)
+            SHADER_UNIFORM_VEC4,            // Shader uniform type: vec4 (4 float)
+            SHADER_UNIFORM_INT,             // Shader uniform type: int
+            SHADER_UNIFORM_IVEC2,           // Shader uniform type: ivec2 (2 int)
+            SHADER_UNIFORM_IVEC3,           // Shader uniform type: ivec3 (3 int)
+            SHADER_UNIFORM_IVEC4,           // Shader uniform type: ivec4 (4 int)
+            SHADER_UNIFORM_SAMPLER2D        // Shader uniform type: sampler2d
+        }
+
+        // Mesh, vertex data and vao/vbo
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Mesh
+        {
+            public int vertexCount;        // Number of vertices stored in arrays
+            public int triangleCount;      // Number of triangles stored (indexed or not)
+
+            // Vertex attributes data
+            public IntPtr vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+            public IntPtr texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+            public IntPtr texcoords2;      // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
+            public IntPtr normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+            public IntPtr tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+            public IntPtr colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+            public IntPtr indices;    // Vertex indices (in case vertex data comes indexed)
+
+            // Animation vertex data
+            public IntPtr animVertices;    // Animated vertex positions (after bones transformations)
+            public IntPtr animNormals;     // Animated normals (after bones transformations)
+            public IntPtr boneIds; // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning)
+            public IntPtr boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning)
+
+            // OpenGL identifiers
+            public uint vaoId;     // OpenGL Vertex Array Object id
+            public IntPtr vboId;    // OpenGL Vertex Buffer Objects id (default vertex data)
+        }
+
+        // Material, includes shader and maps
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct Material
+        {
+            public Shader shader;          // Material shader
+            public MaterialMap* maps;      // Material maps array (MAX_MATERIAL_MAPS)
+            public fixed float @params[4];                       // Material generic parameters
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Matrix
+        {
+            public float m0, m4, m8, m12;  // Matrix first row (4 components)
+            public float m1, m5, m9, m13;  // Matrix second row (4 components)
+            public float m2, m6, m10, m14; // Matrix third row (4 components)
+            public float m3, m7, m11, m15; // Matrix fourth row (4 components)
+        }
+
+        // MaterialMap
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MaterialMap
+        {
+            public Texture2D texture;      // Material map texture
+            public Color color;            // Material map color
+            public float value;            // Material map value
+        }
+
         // -------------- FUNCTIONS --------------
 
         [DllImport("raylib.dll")]
@@ -154,6 +228,33 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
         [DllImport("raylib.dll")]
         public static extern void SetConfigFlags(ConfigFlags flags);
 
+        [DllImport("raylib.dll")]
+        public static extern Shader LoadShader(string vsFileName, string fsFileName);
+
+        [DllImport("raylib.dll")]
+        public static extern void UnloadShader(Shader shader);
+
+        [DllImport("raylib.dll")]
+        public static extern void BeginShaderMode(Shader shader);
+
+        [DllImport("raylib.dll")]
+        public static extern void EndShaderMode();
+
+        [DllImport("raylib.dll")]
+        public static extern unsafe void SetShaderValue(Shader shader, int locIndex, void* value, ShaderUniformDataType uniformType);
+
+        [DllImport("raylib.dll")]
+        public static extern unsafe void UploadMesh(Mesh* mesh, bool dynamic);
+
+        [DllImport("raylib.dll")]
+        public static extern unsafe void DrawMesh(Mesh mesh, Material material, Matrix transform);
+
+        [DllImport("raylib.dll")]
+        public static extern float GetFrameTime();
+
+        [DllImport("raylib.dll")]
+        public static extern int GetShaderLocation(Shader shader, string uniformName);
+
         // -------------- CONSTANTS --------------
 
         public static class Colors
@@ -178,6 +279,65 @@ namespace ServerSideSimulation.Sim.Platform.Raylib
             public static Color CreateColor(byte r, byte g, byte b)
             {
                 return CreateColor(r, g, b, byte.MaxValue);
+            }
+        }
+
+        public static class Matrices
+        {
+            public static readonly Matrix Identity = new Matrix
+            {
+                m0 = 1,
+                m5 = 1,
+                m10 = 1,
+                m15 = 1
+            };
+        }
+
+        public static void SetMeshVertices(ref Mesh mesh, float[] vertices)
+        {
+            mesh.vertexCount = vertices.Length / 3;
+            mesh.vertices = Marshal.UnsafeAddrOfPinnedArrayElement(vertices, 0);
+        }
+
+        public static void SetMeshIndices(ref Mesh mesh, ushort[] indices)
+        {
+            mesh.triangleCount = indices.Length / 3;
+            mesh.indices = Marshal.UnsafeAddrOfPinnedArrayElement(indices, 0);
+        }
+
+        public static unsafe void UploadMeshHelper(ref Mesh mesh, bool dynamic)
+        {
+            fixed (Mesh* pmesh = &mesh)
+            {
+                UploadMesh(pmesh, dynamic);
+            }
+        }
+
+        public static unsafe void SetMaterialParams(ref Material material, float[] fs)
+        {
+            material.@params[0] = fs[0];
+            material.@params[1] = fs[1];
+            material.@params[2] = fs[2];
+            material.@params[3] = fs[3];
+        }
+
+        public static unsafe void SetMaterialMaps(ref Material material, MaterialMap[] maps)
+        {
+            fixed (MaterialMap* pmap = maps)
+            {
+                material.maps = pmap;
+            }
+        }
+
+        public static unsafe void SetShaderValueHelper<T>(Shader shader, int locIndex, T value)
+        {
+            if (value is float f)
+            {
+                SetShaderValue(shader, locIndex, &f, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported shader value type");
             }
         }
 
